@@ -52,7 +52,7 @@ jobs:
         board: ${{ fromJSON(needs.boards.outputs.list) }}
     steps:
       - name: Free disk space
-        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3.2.2
+        uses: endersonmenezes/free-disk-space@2a22f8c59cae9cddae7194b33e6b92d023b2b4b8 # v4.0.0
         with:
           remove_android: true
           remove_tool_cache: true
@@ -134,7 +134,7 @@ jobs:
           echo "IMG=${IMG}" >> "$GITHUB_ENV"
 
       - name: Upload dev image as workflow artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ env.IMG }}
           path: output/images/${{ env.IMG }}
