@@ -15,21 +15,24 @@ and name-advertising facts.
   sees a stable device across reflashes. Credentials come from
   `wpa_supplicant-wlan0.conf` on `/data`, written exclusively by the app's
   on-screen setup (the boot-partition provisioning path was removed — plaintext
-  PSK on FAT).
-- **Ethernet (known gap):** Buildroot generates a DHCP config for `eth0`
-  (`BR2_SYSTEM_DHCP="eth0"`), but the Pi's onboard NIC is named **`end0`** by
-  the kernel, so that file matches nothing and the Ethernet port is
-  **unmanaged — no DHCP, no address**. Plugging in a cable does nothing today.
-  Documented rather than fixed for now; the fix is renaming the match (or the
-  `BR2_SYSTEM_DHCP` value) when Ethernet support is actually wanted, and it
-  must be paired with a `MulticastDNS=` decision for that link (see below).
+  PSK on FAT). `wpa_supplicant@wlan0` is enabled at boot by
+  `/etc/systemd/system-preset/40-instrument-cluster.preset`, so Wi-Fi comes up
+  whether or not the app starts (`assert-release-image.sh` checks the built
+  rootfs).
+- **end0** (onboard Ethernet; the kernel's name for it on the Pi 4 and the
+  Pi 5): `80-end0.network`, with the same DHCPv4 and mDNS settings as wlan0
+  and `RequiredForOnline=no`, so an unplugged port never holds up
+  `network-online.target`. Wi-Fi stays the product's network; the cable is
+  for the bench and for diagnosis. (Buildroot's `BR2_SYSTEM_DHCP="eth0"`
+  used to generate an `eth0.network` that matched nothing, which left the
+  port unmanaged; the defconfigs no longer set it.)
 
 ## Hostname and mDNS
 
 - Hostname: `instrument-cluster` (`BR2_TARGET_GENERIC_HOSTNAME`).
 - `instrument-cluster.local` is answered by **systemd-resolved's mDNS
-  responder on wlan0**, enabled by the `MulticastDNS=yes` line in
-  `80-wlan0.network`. That line is load-bearing: resolved is built with mDNS
+  responder on wlan0** (and on end0 when a cable is plugged in), enabled by
+  the `MulticastDNS=yes` line in `80-wlan0.network` / `80-end0.network`. That line is load-bearing: resolved is built with mDNS
   on globally, but networkd defaults every managed link to `MDNS=no` and
   resolved takes the *minimum* of the two — without the line the device
   advertises no name at all.

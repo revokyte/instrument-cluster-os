@@ -1,0 +1,23 @@
+[Match]
+# The Pi's onboard NIC. The kernel registers it as eth0 and udev renames it
+# to end0 (predictable naming, "onboard device"), on the Pi 4 and the Pi 5
+# alike, so Buildroot's BR2_SYSTEM_DHCP="eth0" never matched anything and
+# Ethernet stayed unmanaged. Matching the name keeps a USB Ethernet dongle
+# (enx...) out of it.
+Name=end0
+
+[Network]
+# Same choices as 80-wlan0.network, for the same reasons (see its comments).
+DHCP=ipv4
+IPv6AcceptRA=no
+LinkLocalAddressing=no
+MulticastDNS=yes
+
+[DHCPv4]
+ClientIdentifier=mac
+
+[Link]
+# Wi-Fi is the product's network; a cable is a bench/diagnosis tool. An
+# unplugged port must not hold systemd-networkd-wait-online (and anything
+# ordered after network-online.target) until its timeout.
+RequiredForOnline=no

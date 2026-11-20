@@ -1,0 +1,16 @@
+# Start the Wi-Fi supplicant at boot, independent of the app.
+#
+# Buildroot's own preset (50-wpa_supplicant.preset) says
+# "disable wpa_supplicant@.service", and the rootfs step runs
+# `systemctl preset-all`, which deletes any wants link that contradicts a
+# preset. So the instance has to be enabled HERE, not with a symlink in
+# post-build or the overlay: presets are read in lexical order and the
+# first match wins, so 40- beats Buildroot's 50-.
+#
+# Without this, nothing in the image starts the supplicant; only the app
+# does (ensure_supplicant in revokyte). A device whose app never starts -
+# a display that does not come up, a crash at import - then has no network
+# at all, which is exactly when it is needed for diagnosis and for the OTA
+# that fixes it. (wifi-setup.service used to pull the instance in with
+# Wants=; it went away with boot-partition Wi-Fi provisioning.)
+enable wpa_supplicant@.service wlan0
