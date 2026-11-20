@@ -11,10 +11,19 @@ GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 # 1. Compile U-Boot script (boot.cmd -> boot.scr)
 # This is the "brain" of the A/B switching logic.
 # Requires 'host-uboot-tools' to be enabled in menuconfig.
+#
+# Release builds compile a staged copy without the serial console: boot.cmd's
+# bootargs REPLACE cmdline.txt on every U-Boot boot, so removing console= from
+# cmdline.txt alone (below) left a release kernel logging to the UART.
 if [ -f "${BOARD_DIR}/boot.cmd" ]; then
     echo "Generating boot.scr from ${BOARD_DIR}/boot.cmd..."
+    BOOT_CMD="${BINARIES_DIR}/boot.cmd"
+    cp "${BOARD_DIR}/boot.cmd" "${BOOT_CMD}"
+    if ! grep -q "^BR2_PACKAGE_OPENSSH=y" "${BR2_CONFIG}"; then
+        sed -i 's/ console=ttyAMA[0-9]*,[0-9]*//g' "${BOOT_CMD}"
+    fi
     "${HOST_DIR}/bin/mkimage" -A arm64 -T script -C none -n "U-Boot boot script" \
-        -d "${BOARD_DIR}/boot.cmd" "${BINARIES_DIR}/boot.scr"
+        -d "${BOOT_CMD}" "${BINARIES_DIR}/boot.scr"
 fi
 
 # 2. Release hardening of the boot artifacts (same release detection as

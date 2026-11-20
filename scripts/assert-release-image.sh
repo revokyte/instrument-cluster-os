@@ -133,6 +133,15 @@ if [ -n "$IMAGES_DIR" ]; then
     if grep -q "console=ttyAMA" "$CMDLINE"; then
         fail "serial console still present in cmdline.txt"
     fi
+    # boot.scr's bootargs replace cmdline.txt on every U-Boot boot, so this is
+    # the check that actually matters; cmdline.txt above is only the fallback.
+    BOOTSCR="$IMAGES_DIR/boot.scr"
+    [ -f "$BOOTSCR" ] || fail "not found: $BOOTSCR"
+    grep -a -q "setenv bootargs" "$BOOTSCR" \
+        || fail "boot.scr sets no bootargs - cannot verify its console"
+    if grep -a -q "console=ttyAMA" "$BOOTSCR"; then
+        fail "serial console still present in boot.scr's bootargs"
+    fi
     # UART must not be brought up by the firmware.
     if grep -q "^enable_uart=1" "$CONFTXT"; then
         fail "enable_uart=1 still present in config.txt"
