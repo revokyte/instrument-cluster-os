@@ -120,6 +120,16 @@ if echo "$sl_unit" | grep -qE "^Requires=.*splashscreen"; then
     fail "instrument-cluster.service Requires= splashscreen.service — a failed splash would discard the dashboard's start job (use Wants=)"
 fi
 
+# The network must come up without the app. Only the app used to start the
+# Wi-Fi supplicant, so a device whose dashboard never started (a panel that
+# does not come up, a crash at import) had no network at all - no SSH on dev
+# images, no OTA to fix it. Buildroot's preset-all deletes wants links that
+# contradict a preset, so check the built rootfs, not the overlay.
+fs_has "etc/systemd/system/multi-user.target.wants/wpa_supplicant@wlan0.service" \
+    || fail "wpa_supplicant@wlan0.service is not enabled - Wi-Fi would depend on the app starting it"
+fs_has "etc/systemd/network/80-end0.network" \
+    || fail "etc/systemd/network/80-end0.network missing - Ethernet (end0) would stay unmanaged"
+
 # Boot-artifact assertions (only when the images dir is provided).
 if [ -n "$IMAGES_DIR" ]; then
     CMDLINE="$IMAGES_DIR/rpi-firmware/cmdline.txt"
